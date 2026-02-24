@@ -3,6 +3,7 @@ import sys
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.optimize import linear_sum_assignment
+from utils.image_to_formation import image_to_outline
 
 # -------------------------------------------------
 # Fix project root path
@@ -24,11 +25,11 @@ DISTANCE = 5               # spacing between drones
 # -------------------------------------------------
 # Generate target formation (USER-CONTROLLED)
 # -------------------------------------------------
-target_formation = generate_shape(
-    shape=SHAPE,
-    n_drones=N_DRONES,
-    distance=DISTANCE
-)
+
+IMAGE_PATH = "D:\drone_swram\input_images\smile.webp"
+N_DRONES = 80
+    
+target_formation = image_to_outline(IMAGE_PATH, n_drones=N_DRONES)
 
 # -------------------------------------------------
 # Initialize random starting positions
