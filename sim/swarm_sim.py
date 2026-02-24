@@ -16,7 +16,7 @@ from utils.evaluate_swarm import evaluate_formation
 # -------------------------------------------------
 # ---------------- USER INPUT ---------------------
 # -------------------------------------------------
-N_DRONES = 15                 # \ CHANGE THIS FREELY
+N_DRONES = 5                 # \ CHANGE THIS FREELY
 SHAPE = "circle"               # line | circle | v | grid
 DISTANCE = 5               # spacing between drones
 # -------------------------------------------------
