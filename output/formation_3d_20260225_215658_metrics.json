@@ -1,0 +1,9 @@
+{
+  "connectivity_ratio": 0.371356783919598,
+  "min_distance": 0.43976837396621704,
+  "avg_distance": 6.212286472320557,
+  "convergence_error": 5.4894795417785645,
+  "num_drones": 200,
+  "rl_used": true,
+  "final_convergence": 5.4894795417785645
+}

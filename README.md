@@ -1,21 +1,21 @@
-# Drone Swarm AI — Intelligent 3D Formation System
+# Drone Swarm AI — Intelligent Formation System
 
-> **Transform any photograph into a fully choreographed 3D drone formation using Computer Vision, Depth AI, Physics Simulation, and Reinforcement Learning.**
+> **Transform any photograph or video into a fully choreographed drone swarm using Computer Vision, Depth AI, Physics Simulation, and Reinforcement Learning.**
 
 ---
 
 ## Table of Contents
 
 1. [Project Overview](#1-project-overview)
-2. [What We Built — Feature Inventory](#2-what-we-built)
+2. [What Was Built](#2-what-was-built)
 3. [Algorithms Used](#3-algorithms-used)
-4. [Core Concepts](#4-core-concepts)
-5. [System Architecture](#5-system-architecture)
-6. [Project Structure](#6-project-structure)
-7. [How to Run](#7-how-to-run)
-8. [Role of Reinforcement Learning](#8-role-of-reinforcement-learning)
-9. [Metrics & What They Mean](#9-metrics--what-they-mean)
-10. [How to Present This Project](#10-how-to-present-this-project)
+4. [System Architecture](#4-system-architecture)
+5. [Project Structure](#5-project-structure)
+6. [How to Run](#6-how-to-run)
+7. [Reinforcement Learning](#7-reinforcement-learning)
+8. [Video Pipeline (New)](#8-video-pipeline-new)
+9. [Metrics](#9-metrics)
+10. [Presentation Guide](#10-presentation-guide)
 11. [Technology Stack](#11-technology-stack)
 12. [Troubleshooting](#12-troubleshooting)
 
@@ -23,331 +23,238 @@
 
 ## 1. Project Overview
 
-**Drone Swarm AI** is an end-to-end AI pipeline that takes a single photograph (e.g., a person standing), automatically extracts the subject's silhouette, distributes hundreds of drones across the shape in 3D space, and simulates their convergence to the formation using either classical physics or a trained Reinforcement Learning policy.
+**Drone Swarm AI** takes a single photograph or video file, automatically extracts the subject silhouette, distributes hundreds of virtual drones in that shape in 3D space, and simulates their convergence using either physics or a trained Reinforcement Learning policy.
 
-### What problem does it solve?
+### What it automates
 
-Real-world drone light shows (think Super Bowl halftime, concerts) require expert choreographers to manually place each drone waypoint. This project **automates that entire process** — feed it any image, and it produces production-ready 3D drone coordinates automatically.
+Real drone light shows (concerts, Super Bowl halftime) require expert choreographers to manually place every waypoint. This project **automates the entire process** — any image or video in, production-ready 3D drone coordinates out.
 
-### What makes it advanced?
-
-| Capability | Approach |
+| Capability | Technique |
 |---|---|
-| Object detection | DeepLabV3 semantic segmentation (COCO-trained) |
-| Depth estimation | MiDaS DPT-Large (monocular 2D to 3D) |
-| Optimal assignment | Hungarian Algorithm (global minimum cost) |
-| Formation motion | Physics (attraction + repulsion) OR PPO Reinforcement Learning |
-| RL training | Stable Baselines 3, curriculum learning, parameter sharing |
-| Pattern learning | Variational Autoencoder (VAE) with collision+connectivity loss |
-| Quality analysis | Connectivity graph, spacing metrics, convergence tracking |
+| Object silhouette extraction | DeepLabV3-ResNet101 semantic segmentation |
+| 3D depth from single photo | MiDaS DPT-Large monocular depth estimation |
+| Drone-to-target matching | Hungarian Algorithm (global optimal assignment) |
+| Formation motion (image) | Physics (attraction + repulsion) OR PPO Reinforcement Learning |
+| Formation motion (video) | EMA lerp pixel-space tracking (smooth, flicker-free) |
+| RL training | Stable Baselines 3, 8-stage curriculum, parameter sharing |
+| Pattern distribution | Poisson-disk sampling (interior) + arc-length contour (edges) |
 
 ---
 
-## 2. What We Built
+## 2. What Was Built
 
 ### Phase 1 — Core Pipeline
-- `pipeline.py` — single entry point that orchestrates all stages end-to-end
-- `sim/swarm_sim.py` — 2D simulation with attraction forces and Hungarian assignment
-- `sim/swarm_sim_3d.py` — 3D volumetric simulation with MiDaS depth + layered filling
+- `pipeline.py` — single entry point for image processing
+- `sim/swarm_sim.py` — 2D attraction-physics simulation
+- `sim/swarm_sim_3d.py` — 3D volumetric simulation with MiDaS depth
 
-### Phase 2 — Formation Precision Upgrade
-- Rewrote `utils/semantic_image_to_formation.py` with **Poisson-disk sampling**
-  - 75% interior fill (even spacing, no clustering)
-  - 25% arc-length interpolated contour edge (exact boundary tracing)
-  - 1024 px high-res mask with morphological cleanup
-  - Result: drones precisely match the human silhouette boundary
+### Phase 2 — Formation Precision
+Rewrote `utils/semantic_image_to_formation.py`:
+- **80% interior** — Poisson-disk sampling for uniform, non-clustered fill
+- **20% contour** — arc-length interpolated boundary tracing (exact silhouette edge)
+- 1024 px high-res mask + morphological cleanup (9×9 ellipse, close×3, open×1)
 
 ### Phase 3 — 3D Depth Fix
-- Fixed `utils/formation_3d.py` — removed 4x layer stacking that was creating rectangular blobs
-- Now 1:1 mapping: each 2D point maps to one 3D point, Z = MiDaS depth x height_scale
+Fixed `utils/formation_3d.py`:
+- Removed 4× layer stacking that created rectangular blobs
+- Now **1:1 mapping**: each 2D point → one 3D point, Z = MiDaS depth × height_scale
 - Correct Y-flip: image pixel space (Y-down) to world space (Y-up)
 
 ### Phase 4 — Visualization Overhaul
-- 6-panel precision report:
-  1. Original input image
-  2. Drone overlay on image (target positions shown directly on photo)
-  3. 2D front view (XY plane)
-  4. 3D front-on view (azimuth -88 degrees)
-  5. 3D angled view (azimuth -50 degrees)
-  6. **Convergence curve** (mean error per frame — RL vs Physics comparison)
+6-panel precision report saved at `output/formation_precision_report.png`:
+1. Original input image
+2. Drone overlay on image (formation directly on photo)
+3. 2D front view (XY plane)
+4. 3D front-on view (azimuth −88°)
+5. 3D angled view (azimuth −50°)
+6. **Convergence curve** (mean error per frame — shows RL vs Physics)
 
-### Phase 5 — Reinforcement Learning Integration
-- `RL/swarm_env_sb3.py` — Gymnasium environment, per-drone (21,) obs space
-- `RL/train_sb3.py` — PPO training with 8-stage curriculum
-- `RL/rl_controller.py` — inference engine, N-agnostic (works for 20 or 1000 drones)
-- `RL/__init__.py` — package alias for clean imports
-- Pipeline extended: RL checkpoint replaces physics loop with PPO policy
+### Phase 5 — Reinforcement Learning
+- `RL/swarm_env_sb3.py` — Gymnasium env, per-drone **(21,) obs space**
+- `RL/train_sb3.py` — PPO training, 8-stage curriculum, N=20 fixed
+- `RL/rl_controller.py` — inference engine, **N-agnostic** (works for 20 or 1000 drones)
+- `RL/checkpoints/sb3/best_model.zip` — trained model (reward ≈55 at stage 6)
 
-### Phase 6 — ML Extensions
-- `models/vae.py` — Variational Autoencoder for learning formation distributions
-- `train/train_vae.py` — constrained training (collision avoidance loss + connectivity loss)
-- `analysis/` — dataset generation, network topology analysis, scalability benchmarks
-- `analysis/train_connectivity_model.py` — ML model for predicting connectivity
+### Phase 6 — Video Pipeline (v2, current)
+`pipeline_video.py` — completely new pixel-space tracking system:
+- Processes any video frame-by-frame; drones **smoothly follow the moving person**
+- EMA lerp (α=0.30) instead of physics — no "rain" effect, no repulsion scattering
+- Hungarian reassignment every frame in pixel coordinates
+- MiDaS depth every N frames → drone dots coloured by depth (cyan=near, red=far)
+- Output: side-by-side MP4 (original | drone overlay) + per-frame drone CSV
+
+### Phase 7 — ML Extensions
+- `models/vae.py` — Variational Autoencoder for formation distribution learning
+- `train/train_vae.py` — constrained training (collision loss + connectivity loss)
+- `analysis/` — network topology analysis, scalability benchmarks, connectivity ML
 
 ---
 
 ## 3. Algorithms Used
 
-### 3.1 Hungarian Algorithm (Optimal Assignment)
-- **What**: Solves the assignment problem — match N drones to N targets with minimum total cost
-- **Why**: Greedy assignment (nearest drone to nearest target) wastes energy. Hungarian gives the globally optimal solution.
-- **Complexity**: O(n^3) — fast enough for 1000 drones
-- **Where**: `scipy.optimize.linear_sum_assignment` in `swarm_env_sb3.py`, `rl_controller.py`
+### 3.1 Hungarian Algorithm — Optimal Assignment
+Solves the N-drone-to-N-target matching with minimum total distance. Greedy (nearest-drone-to-nearest-target) wastes energy and causes drones to cross paths. Hungarian gives the globally optimal solution in O(n³). Used every frame in both image and video pipelines via `scipy.optimize.linear_sum_assignment`.
 
 ### 3.2 Poisson-Disk Sampling
-- **What**: Places points such that no two points are closer than a minimum distance r
-- **Why**: Uniform, natural distribution inside shapes — looks like a real lit-up silhouette, not random clusters
-- **Where**: `utils/semantic_image_to_formation.py`
+Places formation points so no two points are closer than a minimum radius. Produces uniform, natural fills — looks like a real lit-up silhouette, not random clusters. Used in `utils/semantic_image_to_formation.py`.
 
-### 3.3 Inverse-Square Repulsion Physics
-- **Formula**: F_repulsion = sum(diff / distance^3) x strength for all neighbor pairs within radius
-- **Why**: Mimics magnetic or electrostatic repulsion — keeps drones from colliding while allowing close formation
-- **Where**: `sim/swarm_sim_3d.py`, `RL/swarm_env_sb3.py`
+### 3.3 EMA Lerp Tracking (Video)
+Per-frame drone motion for video:
+```
+targets_smooth  =  0.70 × new_targets  +  0.30 × prev_targets   # suppress jitter
+positions_new   =  positions  +  0.30 × (targets_smooth − positions)  # glide
+```
+No repulsion forces — dense formations stay intact.
 
 ### 3.4 Proximal Policy Optimization (PPO)
-- **What**: Policy gradient RL algorithm from OpenAI — on-policy, clip-ratio prevents destructive updates
-- **Why**: Stable training for continuous action spaces; works well for multi-agent parameter sharing
-- **Where**: `RL/train_sb3.py` via Stable Baselines 3
+On-policy policy gradient with clip ratio — prevents destructive updates during curriculum training. Used for the image pipeline RL mode via Stable Baselines 3.
 
 ### 3.5 Curriculum Learning
-- **What**: Training progression — start easy (grid 1.8m spacing), gradually harder (v-shape 1.0m tight)
-- **Why**: Direct training on hard shapes fails; curriculum lets the policy bootstrap from simple patterns
-- **8 stages**: grid(1.8) -> grid(1.5) -> circle -> line -> v-shape -> grid(1.2) -> circle(1.2) -> v(1.0)
-- **Where**: `RL/train_sb3.py`
+Training progresses through 8 stages of increasing difficulty:
 
-### 3.6 Parameter Sharing (Decentralized Execution)
-- **What**: One shared policy network is trained on a single drone's local observation; applied independently to every drone during execution
-- **Why**: N-agnostic — the same model trained with 20 drones works for 1000 at zero extra cost
-- **Where**: `RL/rl_controller.py` (per-drone inference loop)
+| Stage | Shape | Spacing |
+|---|---|---|
+| 1 | Grid | 1.8 m (easiest) |
+| 2 | Grid | 1.5 m |
+| 3 | Circle | 1.5 m |
+| 4 | Line | 1.5 m |
+| 5 | V-shape | 1.5 m |
+| 6 | Grid | 1.2 m |
+| 7 | Circle | 1.2 m |
+| 8 | V-shape | 1.0 m (hardest) |
+
+### 3.6 Parameter Sharing (Decentralised Execution)
+One PPO policy network (trained with N=20) applied independently to every drone at runtime — so the same model works for any swarm size without retraining. Key: per-drone observation is always **(21,)** regardless of N.
 
 ### 3.7 k-d Tree Spatial Indexing
-- **What**: Binary space-partitioning data structure for O(log N) nearest-neighbor queries
-- **Why**: Finding each drone's neighbors naively is O(N^2). k-d tree cuts this to O(N log N).
-- **Where**: `scipy.spatial.cKDTree` used in env, controller, physics loop
+`scipy.spatial.cKDTree` reduces neighbor queries from O(N²) to O(N log N). Used in physics simulation and RL environment to find the 6 nearest neighbors for each drone.
 
-### 3.8 Variational Autoencoder (VAE)
-- **What**: Encodes formation patterns to a compressed latent space, decodes back to drone positions
-- **Why**: Learns the statistical distribution of valid formations — can generate new formation variants
-- **Loss**: Reconstruction (MSE) + KL-divergence + collision penalty + connectivity penalty
-- **Where**: `models/vae.py`, `train/train_vae.py`
+### 3.8 MiDaS Monocular Depth Estimation
+DPT-Large transformer predicts per-pixel relative depth from a single RGB image. Outputs normalized depth D(x,y) ∈ [0,1]. Used to assign Z-coordinates to 2D drone positions, and to colour drone dots in the video pipeline.
 
-### 3.9 Monocular Depth Estimation (MiDaS)
-- **What**: DPT-Large transformer that predicts per-pixel relative depth from a single RGB image
-- **Why**: Enables genuine 3D formation from a simple photo without stereo cameras or LiDAR
-- **Where**: `utils/depth_to_3d.py`
+### 3.9 DeepLabV3 Semantic Segmentation
+ResNet-101 backbone with atrous convolutions; COCO-pretrained. Automatically identifies `person` (class 15) in any photo or video frame without manual masking. Runs at 512×512 then resized to processing resolution.
 
-### 3.10 DeepLabV3 Semantic Segmentation
-- **What**: FCN with atrous convolutions and ASPP, ResNet-101 backbone, COCO-trained
-- **Why**: Automatically identifies the "person" class (class ID 15) in any photo — no manual masking
-- **Where**: `utils/semantic_image_to_formation.py`
+### 3.10 Variational Autoencoder (VAE)
+Encodes formation patterns to a compressed latent space; decodes back to drone positions. Loss: MSE reconstruction + KL-divergence + collision penalty + connectivity penalty. Enables generating new formation variants from learned distribution.
 
 ---
 
-## 4. Core Concepts
+## 4. System Architecture
 
-### Swarm Intelligence
-A large group of simple agents (drones) following local rules that produce globally intelligent behavior. No single central controller — each drone reacts to its neighbors and its target. Inspired by birds flocking (Reynolds Boids), ant colonies, and fish schooling.
-
-### Formation Control
-The specific swarm problem of driving agents from arbitrary starting positions to a defined geometric pattern. Two sub-problems:
-- **Assignment**: which agent goes to which target position
-- **Navigation**: how each agent moves there while avoiding collisions
-
-### Decentralized Multi-Agent RL (MARL)
-Each drone is an independent RL agent observing only local information (relative target position + 6 nearest neighbors). Agents are trained with a shared policy (parameter sharing) — identical neural network weights for every drone. At execution: each drone runs its own inference independently.
-
-### Centralized Training, Decentralized Execution (CTDE)
-Training is done in a simulated environment where all drone states are accessible (centralized). But the trained policy only uses local observations (decentralized) — making it deployable on real drones with onboard sensors only.
-
-### Observation Space Design
-Each drone's observation is a 21-dimensional vector:
-
+### Image Pipeline
 ```
-obs = [
-  rel_target_x,  rel_target_y,  dist_to_target,    # Where am I going?
-  nb1_dx, nb1_dy, nb1_dist,                          # Neighbor 1
-  nb2_dx, nb2_dy, nb2_dist,                          # Neighbor 2
-  ...                                                # (6 nearest neighbors)
-]
-```
-
-All values are **relative** to the focal drone — so the policy is translation-invariant.
-
-### Reward Shaping
-The RL reward balances three competing objectives:
-
-```
-reward = -0.1 x mean_error          # formation accuracy
-        + 0.5 x connectivity_ratio  # network connectivity
-        - 0.2 x unsafe_ratio        # collision avoidance
-        + 10.0 terminal bonus if (mean_error < 0.5 AND connectivity > 0.8)
+Input Image
+    │
+    ▼
+DeepLabV3 Segmentation   ──►  Person binary mask (1024 px)
+    │
+    ├─── Poisson-disk interior (80%)  ───┐
+    │                                    ├── N × 2D target positions
+    └─── Arc-length contour (20%)   ─────┘
+                                         │
+    MiDaS DPT-Large Depth  ─────────────►├── Lift to 3D → N × 3D targets
+                                         │
+                              Hungarian Algorithm
+                            (optimal drone ↔ target assignment)
+                                         │
+                    ┌────────────────────┤
+                    │                    │
+               RL MODE               PHYSICS MODE
+           PPO per-drone           Attraction + Repulsion
+           inference (21-dim obs)  (k-d tree, O(N log N))
+                    │                    │
+                    └────────┬───────────┘
+                             │
+              6-Panel Report + CSV + Metrics JSON
 ```
 
-### Depth-Lifting (2D to 3D)
-MiDaS produces a relative depth map D(x,y) in [0,1]. Each 2D drone position p = (px, py) is lifted to 3D as:
-
+### Video Pipeline (v2)
 ```
-P_3D = (px,  py,  D(px, py) x height_scale)
-```
-
-No stereo camera, no LiDAR — a single photo is enough.
-
-### Connectivity (Network Graph)
-Drones within `comm_range` distance are considered connected (could communicate or maintain swarm cohesion). Total possible edges = N(N-1)/2. Connectivity ratio = actual connected pairs / max possible pairs. Target: greater than 0.8 (80% connected).
-
----
-
-## 5. System Architecture
-
-```
-INPUT IMAGE
-     |
-     v
-+---------------------------------+
-|  DeepLabV3 Semantic Segmentation|  <- Extracts person/object mask
-|  (torchvision pretrained)       |
-+------------+--------------------+
-             |  binary mask
-      +------+--------+
-      |               |
-      v               v
-Poisson-Disk       Arc-Length
-Interior Fill      Contour Sample   <- Combined: N target 2D positions
-(75% of drones)    (25% of drones)
-      |               |
-      +------+--------+
-             |  2D targets (N x 2)
-             v
-+---------------------------------+
-|  MiDaS DPT-Large Depth Est.    |  <- Estimates depth per pixel
-+------------+--------------------+
-             |  depth map
-             v
-+---------------------------------+
-|  3D Lifting: Z = depth x scale |  <- Produces 3D targets (N x 3)
-+------------+--------------------+
-             |
-             v
-+---------------------------------+
-|  Hungarian Algorithm           |  <- Optimally assigns drones to targets
-|  (scipy.optimize.lsa)          |
-+------------+--------------------+
-             |
-             v
-   +---------+-----------+
-   |                     |
-   v                     v
-RL MODE               PHYSICS MODE
-PPO Policy            Attraction +
-(per-drone            Repulsion Forces
-inference loop)       (O(N log N) k-d tree)
-   |                     |
-   +---------+-----------+
-             |  positions (150 frames)
-             v
-+---------------------------------+
-|  6-Panel Visualization         |  <- Saves formation_precision_report.png
-|  + Convergence Curve           |
-+------------+--------------------+
-             |
-             v
-      CSV Export + Metrics JSON
-      (x, y, z per drone)
+Video frame  →  resize to proc_width × proc_h (pixel space throughout)
+    │
+    ├── DeepLabV3 segmentation  →  bool mask
+    │
+    ├── sample_targets_px()     →  (N, 2) pixel coords: 80% interior + 20% contour
+    │
+    ├── EMA smooth targets      →  0.70 × new + 0.30 × prev (suppress jitter)
+    │
+    ├── Hungarian assignment    →  optimal drone ↔ target pairing
+    │
+    ├── Lerp step               →  positions += 0.30 × (targets − positions)
+    │
+    ├── MiDaS depth [every K frames]  →  depth-colour drone dots
+    │
+    └── Render  →  [original | drone overlay] + HUD bar  →  MP4 frame
 ```
 
 ---
 
-## 6. Project Structure
+## 5. Project Structure
 
 ```
 drone_swarm/
-|
-+-- pipeline.py                     <- MAIN ENTRY POINT for images
-+-- pipeline_video.py               <- VIDEO ENTRY POINT (NEW) — swarm tracks video
-|
-+-- RL/                             <- Reinforcement Learning module
-|   +-- swarm_env_sb3.py           <- Gymnasium env (21-dim obs, per-drone)
-|   +-- train_sb3.py               <- PPO training script (curriculum)
-|   +-- rl_controller.py           <- Inference engine (N-agnostic)
-|   +-- __init__.py                <- Package + alias registration
-|   +-- env_2d.py / env_3d.py     <- Legacy RLlib environments
-|   +-- train.py                   <- Legacy RLlib training script
-|   +-- curriculum.py              <- Curriculum schedules
-|   +-- reward.py                  <- Reward function definitions
-|   +-- evaluate.py                <- Policy evaluation tools
-|   +-- run_with_policy.py         <- Run simulation using saved policy
-|   +-- sim_core.py                <- Simulation core for RL env
-|   +-- checkpoints/sb3/
-|       +-- best_model.zip         <- Best trained PPO model (USE THIS)
-|       +-- final_model.zip        <- End-of-training model
-|
-+-- utils/                          <- Core AI & physics modules
-|   +-- semantic_image_to_formation.py  <- DeepLabV3 + Poisson-disk
-|   +-- depth_to_3d.py                  <- MiDaS depth estimation
-|   +-- formation_3d.py                 <- 2D to 3D lifting (1:1 mapping)
-|   +-- shape_generator.py              <- Geometric shapes (grid/circle/v)
-|   +-- evaluate_swarm.py               <- Metrics computation
-|   +-- metrics.py                      <- ML loss functions
-|   +-- image_to_formation.py           <- Image processing helpers
-|   +-- network_metrics.py              <- Connectivity graph analysis
-|
-+-- models/                         <- ML model definitions
-|   +-- vae.py                     <- Variational Autoencoder
-|
-+-- train/                          <- Training pipelines
-|   +-- train_vae.py               <- VAE training
-|
-+-- sim/                            <- Standalone simulation scripts
-|   +-- swarm_sim.py               <- 2D formation simulation
-|   +-- swarm_sim_3d.py            <- 3D volumetric simulation
-|   +-- generate_new_formations.py
-|   +-- visualize_formations.py
-|
-+-- analysis/                       <- Research tools
-|   +-- swarm_core.py
-|   +-- network_analysis.py
-|   +-- scalability_plot.py
-|   +-- optimize_spacing.py
-|   +-- train_connectivity_model.py
-|   +-- generate_ml_dataset.py
-|   +-- swarm_ml_dataset.csv
-|
-+-- data/                           <- Formation datasets
-|   +-- formations.npy
-|   +-- generate_formations.py
-|
-+-- input_images/                   <- Place your images here
-|   +-- Cristiano_Ronaldo.webp
-|   +-- 516AaQ6o17L.webp
-|   +-- smile.webp
-|
-+-- output/                         <- All outputs land here
-|   +-- formation_precision_report.png   <- 6-panel visual
-|   +-- formation_3d_<timestamp>.csv     <- Drone positions
-|
-+-- vae_model.pth                   <- Pre-trained VAE weights
+│
+├── pipeline.py                     ← Main entry point (images)
+├── pipeline_video.py               ← Video entry point — v2 pixel-space lerp
+│
+├── RL/
+│   ├── swarm_env_sb3.py           ← Gymnasium env (21-dim per-drone obs)
+│   ├── train_sb3.py               ← PPO + 8-stage curriculum
+│   ├── rl_controller.py           ← N-agnostic inference engine
+│   ├── __init__.py
+│   ├── checkpoints/sb3/
+│   │   ├── best_model.zip         ← Trained PPO (reward ≈55)  ← USE THIS
+│   │   └── final_model.zip
+│   └── [legacy: env_2d.py, env_3d.py, train.py, curriculum.py, reward.py]
+│
+├── utils/
+│   ├── semantic_image_to_formation.py  ← DeepLabV3 + Poisson-disk + contour
+│   ├── depth_to_3d.py                  ← MiDaS depth estimation
+│   ├── formation_3d.py                 ← 2D → 3D lifting (1:1 mapping, fixed)
+│   ├── shape_generator.py              ← Geometric shapes (grid/circle/v)
+│   ├── evaluate_swarm.py               ← Metrics computation
+│   ├── metrics.py                      ← ML loss functions
+│   ├── image_to_formation.py           ← Image processing helpers
+│   └── network_metrics.py              ← Connectivity graph analysis
+│
+├── models/
+│   └── vae.py                     ← Variational Autoencoder
+│
+├── train/
+│   └── train_vae.py               ← VAE training
+│
+├── sim/
+│   ├── swarm_sim.py               ← 2D standalone simulation
+│   └── swarm_sim_3d.py            ← 3D standalone simulation
+│
+├── analysis/                      ← Research: network analysis, scalability, ML
+│
+├── data/                          ← Formation datasets (.npy)
+│
+├── input_images/                  ← Place images/videos here
+│   ├── Cristiano_Ronaldo.webp
+│   └── 4761762-uhd_2160_4096_25fps.mp4
+│
+├── output/                        ← All outputs land here
+│   ├── formation_precision_report.png
+│   ├── *_swarm.mp4                ← Video output
+│   └── *_positions.csv            ← Drone positions per frame
+│
+└── vae_model.pth                  ← Pre-trained VAE weights
 ```
 
 ---
 
-## 7. How to Run
+## 6. How to Run
 
-### Environment Setup
-
-This project uses a `.venv` virtual environment. Use the full Python path to run commands:
+### Environment
 
 ```bash
-# Windows — use full Python path from project root
+# Use the .venv Python throughout (Windows)
 D:\drone_swram\.venv\Scripts\python.exe  <script>
 
-# OR activate and then use python normally
-D:\drone_swram\.venv\Scripts\activate
-python <script>
-```
-
-Install all dependencies (first time only):
-
-```bash
+# First-time install
 D:\drone_swram\.venv\Scripts\pip.exe install torch torchvision timm
 D:\drone_swram\.venv\Scripts\pip.exe install stable-baselines3[extra] gymnasium
 D:\drone_swram\.venv\Scripts\pip.exe install scipy numpy opencv-python matplotlib networkx pandas pillow
@@ -355,31 +262,45 @@ D:\drone_swram\.venv\Scripts\pip.exe install scipy numpy opencv-python matplotli
 
 ---
 
-### Option A — Full Pipeline (Recommended)
+### A — Image Pipeline (Physics mode)
 
-**Physics mode (no RL needed):**
 ```bash
-python pipeline.py --mode 3d --image input_images/Cristiano_Ronaldo.webp --output output/ --base-drones 200
+python pipeline.py \
+  --mode 3d \
+  --image input_images/Cristiano_Ronaldo.webp \
+  --output output/ \
+  --base-drones 200
 ```
 
-**RL mode (uses trained PPO policy):**
+Steps: segmentation → Poisson targets → MiDaS depth → 3D lift → Hungarian → physics simulation → 6-panel report + CSV.
+
+### A2 — Image Pipeline (RL mode)
+
 ```bash
-python pipeline.py --mode 3d --image input_images/Cristiano_Ronaldo.webp --output output/ --base-drones 200 --rl-checkpoint RL/checkpoints/sb3/best_model
+python pipeline.py \
+  --mode 3d \
+  --image input_images/Cristiano_Ronaldo.webp \
+  --output output/ \
+  --base-drones 200 \
+  --rl-checkpoint RL/checkpoints/sb3/best_model
 ```
 
-What happens step by step:
-1. Loads image, DeepLabV3 extracts silhouette mask
-2. Poisson-disk samples N drone target positions in 2D
-3. MiDaS estimates depth, lifts to 3D
-4. Hungarian algorithm assigns drones to targets (globally optimal)
-5. RL mode: PPO policy drives each drone independently for 150 frames
-6. Physics mode: attraction + repulsion physics drives convergence
-7. Saves `output/formation_precision_report.png` (6 panels)
-8. Saves CSV + metrics JSON
+Replaces the physics loop with the trained PPO policy. Panel 6 shows the convergence curve vs physics.
+
+**`pipeline.py` CLI flags:**
+
+| Flag | Default | Description |
+|---|---|---|
+| `--mode` | `3d` | `2d` or `3d` |
+| `--image` | required | Input image path |
+| `--output` | `output/` | Output directory |
+| `--base-drones` | `300` | Number of drones |
+| `--rl-checkpoint` | None | PPO model path (no `.zip`) |
+| `--auto-train-rl` | False | Train RL model before running |
 
 ---
 
-### Option B — Train RL Model from Scratch
+### B — Train RL from Scratch
 
 ```bash
 python RL/train_sb3.py \
@@ -389,267 +310,236 @@ python RL/train_sb3.py \
   --checkpoint-dir RL/checkpoints/sb3
 ```
 
-What happens:
-- 8 curriculum stages (grid 1.8m spacing to tighter v-shape 1.0m)
-- Saves `best_model.zip` (highest eval reward) + periodic checkpoints every 30k steps
-- Takes approximately 5 minutes on CPU
+Saves `best_model.zip` (highest eval reward) + checkpoints every 30k steps. Takes ~5 min on CPU.
 
 ---
 
-### Option B2 — Video Drone Swarm (NEW)
-
-Process any video and generate an animated swarm that traces the person silhouette in every frame:
+### C — Video Pipeline (v2)
 
 ```bash
-# Physics mode (fast, no RL)
+# Standard — depth colours every 6 frames
 python pipeline_video.py \
   --video input_images/4761762-uhd_2160_4096_25fps.mp4 \
-  --output output/ \
+  --output output \
   --drones 300 \
+  --depth-every 6 \
+  --dot-radius 5
+
+# Fast test — no depth, first 10 frames only
+python pipeline_video.py \
+  --video input_images/4761762-uhd_2160_4096_25fps.mp4 \
+  --output output \
+  --drones 300 \
+  --max-frames 10 \
   --depth-every 0
 
-# RL-PPO mode (best quality, uses trained policy per frame)
+# With 3D panel
 python pipeline_video.py \
   --video input_images/4761762-uhd_2160_4096_25fps.mp4 \
-  --output output/ \
-  --drones 300 \
-  --depth-every 8 \
-  --rl-checkpoint RL/checkpoints/sb3/best_model
-
-# With 3D panel (slower — adds 3D matplotlib view)
-python pipeline_video.py \
-  --video input_images/4761762-uhd_2160_4096_25fps.mp4 \
-  --output output/ \
+  --output output \
   --drones 300 \
   --render-3d
 ```
 
-**What the video pipeline produces:**
-- `output/<video_name>_swarm.mp4` — side-by-side: original video | drone swarm overlay
-- `output/<video_name>_positions.csv` — every drone position per frame (frame, drone_id, x, y, z)
-
-**How temporal consistency works:**
-- Frame 0: Hungarian assigns 300 drones to person silhouette targets
-- Frame 1+: Hungarian reassigns drones to new targets (ensures minimal crossing/shuffling)
-- EMA smoothing (alpha=0.65) on targets prevents jitter from frame-to-frame segmentation noise
-- Physics/RL moves drones incrementally — they "chase" the moving person across scenes
-
-**Key CLI flags for `pipeline_video.py`:**
+**`pipeline_video.py` CLI flags:**
 
 | Flag | Default | Description |
 |---|---|---|
 | `--video` | required | Input video path |
-| `--drones` | 300 | Number of drones |
-| `--depth-every` | 5 | Run MiDaS every N frames (0=disable, faster) |
-| `--motion-steps` | 6 | Physics/RL iterations per video frame |
-| `--step-size` | 0.15 | Attraction step size (higher=faster response) |
-| `--rl-checkpoint` | None | Path to PPO model (no .zip) |
-| `--render-3d` | False | Add 3D scatter panel to output |
-| `--max-frames` | 0 | Process first N frames only (0=all) |
-| `--skip-frames` | 0 | Skip every N frames for speed |
-| `--dot-radius` | 5 | Drone dot size in pixels |
+| `--output` | `output` | Output directory |
+| `--drones` | `300` | Number of drones |
+| `--proc-width` | `640` | Processing width in pixels |
+| `--lerp-alpha` | `0.30` | Drone lerp speed per frame (0.1=slow, 0.5=fast) |
+| `--depth-every` | `6` | Run MiDaS every N frames (`0` = disable) |
+| `--render-3d` | False | Add 3D scatter panel to output video |
+| `--show-targets` | False | Show faint target markers behind drones |
+| `--max-frames` | `0` | Cap frames processed (`0` = all) |
+| `--dot-radius` | `5` | Drone dot radius in pixels |
+
+**Output files:**
+- `output/<name>_swarm.mp4` — side-by-side: original | drone overlay + HUD bar
+- `output/<name>_positions.csv` — columns: `frame, drone_id, px_col, px_row, depth`
 
 ---
 
-### Option C — Standalone 2D Simulation
+### D — Standalone Simulations
 
 ```bash
-python sim/swarm_sim.py
-```
+python sim/swarm_sim.py          # 2D
+python sim/swarm_sim_3d.py       # 3D
 
-### Option D — Standalone 3D Simulation
-
-```bash
-python sim/swarm_sim_3d.py
-```
-
-### Option E — Train VAE Model
-
-```bash
-python train/train_vae.py
-```
-
-### Option F — Network Analysis
-
-```bash
-python analysis/network_analysis.py
+python train/train_vae.py        # VAE training
+python analysis/network_analysis.py   # graph analysis
 ```
 
 ---
 
-### Key CLI Parameters for `pipeline.py`
+## 7. Reinforcement Learning
 
-| Flag | Default | Description |
-|---|---|---|
-| `--mode` | `3d` | `2d` or `3d` pipeline |
-| `--image` | required | Path to input image |
-| `--output` | `output/` | Output directory |
-| `--base-drones` | `300` | Number of drones |
-| `--rl-checkpoint` | None | Path to PPO `.zip` model (omit `.zip` extension) |
-| `--auto-train-rl` | False | Train RL model automatically before running |
+### Why RL over pure physics?
 
----
+Physics applies the same force equation every frame — no awareness of swarm state. RL **learns a navigation strategy** through 300k simulation steps:
+- When to approach, when to wait
+- Collision avoidance as a trained skill (not hard constraint)
+- Faster convergence across diverse formation shapes
 
-## 8. Role of Reinforcement Learning
-
-### Why RL instead of pure physics?
-
-Physics-based control (attraction + repulsion) is simple but limited:
-- Every drone independently chases its target with no coordination
-- Drones frequently block each other — no awareness of the swarm as a whole
-- Repulsion is hard-coded, not adaptive to the situation
-- Convergence can be slow and sometimes oscillates
-
-RL **learns a navigation strategy** — not just a force equation:
-- The policy learns when to approach and when to wait for clearance
-- Repulsion behavior emerges naturally from the reward signal
-- Collision avoidance becomes a trained skill, not a hard constraint
-- Convergence is faster and smoother across diverse shapes
-
-### What the RL policy does at runtime
-
-For each simulation frame, for each drone:
-1. Build a 21-dimensional local observation (relative target + 6 nearest neighbors)
-2. Feed through the PPO neural network (2 hidden layers, 64 units each, tanh)
-3. Output a 2D velocity delta [dvx, dvy] — clamped to [-0.2, +0.2]
-4. Apply this delta on top of base physics attraction to move the drone
-5. Z-axis (depth) is kept physics-based (MiDaS depth attraction), not RL-controlled
-
-### Training architecture details
-
-```
-Environment: SwarmSB3Env (gymnasium.Env)
-  obs_space:  Box(-inf, +inf, shape=(21,))   <- single drone local view
-  act_space:  Box(-0.2, +0.2, shape=(2,))    <- velocity delta (XY)
-
-Algorithm: PPO (Stable Baselines 3 v2.7.1)
-  Policy: MlpPolicy (2 hidden layers x 64 units, tanh activations)
-  n_steps: 4096 per policy update
-  n_epochs: 10 per update
-  clip_range: 0.2
-
-Curriculum: 8 stages of increasing difficulty
-  Stage 1: shape=grid,   dist=1.8m  (easiest, lots of space)
-  Stage 2: shape=grid,   dist=1.5m
-  Stage 3: shape=circle, dist=1.5m
-  Stage 4: shape=line,   dist=1.5m
-  Stage 5: shape=v,      dist=1.5m
-  Stage 6: shape=grid,   dist=1.2m
-  Stage 7: shape=circle, dist=1.2m
-  Stage 8: shape=v,      dist=1.0m  (hardest, tight v-shape)
-
-Reward per step:
-  -0.1 x mean distance to targets       <- approach targets
-  +0.5 x connectivity ratio             <- stay networked
-  -0.2 x collision unsafe ratio         <- avoid collisions
-  +10.0 terminal bonus (if good result) <- converge fully
-
-Training results (300k steps, ~5 min CPU):
-  Stage 1 (grid 1.8m):    reward ~ 60   <- easy, policy learns basics
-  Stage 6 (grid 1.2m):    reward ~ 55   <- tighter, still strong
-  Stage 8 (v 1.0m):       reward ~ 12   <- hardest shape, policy adapts
-```
-
-### N-agnostic inference — the key design decision
-
-The policy is trained with N=20 drones but works for any number at deployment:
+### Observation space — per-drone (21-dim)
 
 ```python
-# At inference time (rl_controller.py):
-for i in range(N_drones):         # N can be 20, 200, or 1000
-    obs_i = build_obs(i)          # always (21,) — same shape every time
-    action, _ = model.predict(obs_i)   # same network, same weights
+obs = [
+    rel_target_x,  rel_target_y,  dist_to_target,     # 3  — where to go
+    nb1_dx, nb1_dy, nb1_dist,                           # 3  — neighbor 1
+    nb2_dx, nb2_dy, nb2_dist,                           # 3  — neighbor 2
+    nb3_dx, nb3_dy, nb3_dist,                           # 3  — neighbor 3
+    nb4_dx, nb4_dy, nb4_dist,                           # 3  — neighbor 4
+    nb5_dx, nb5_dy, nb5_dist,                           # 3  — neighbor 5
+    nb6_dx, nb6_dy, nb6_dist,                           # 3  — neighbor 6
+]  # total = 21 features, all relative to focal drone
+```
+
+### Reward shaping
+
+```
+reward = −0.1 × mean_dist_to_targets   # formation accuracy
+       + 0.5 × connectivity_ratio       # stay networked
+       − 0.2 × unsafe_ratio             # avoid collisions
+       + 10.0  (terminal bonus if error < 0.5 AND connectivity > 0.8)
+```
+
+### Parameter sharing — N-agnostic inference
+
+Trained with N=20 drones, works for any N at deployment:
+
+```python
+# rl_controller.py  — deploy time
+for i in range(N_drones):          # N can be 20, 200, or 1000
+    obs_i = build_obs(i)            # always (21,) — same shape
+    action, _ = model.predict(obs_i)
     apply_action(i, action)
 ```
 
-This is **parameter sharing** — one neural network, applied independently N times. No retraining is needed for different swarm sizes.
+One neural network → applied N times independently. No retraining for different swarm sizes.
 
-### RL vs Physics comparison
+### Training config
 
-The 6th panel of the output report shows a convergence curve. Expect:
-- RL (cyan line): faster convergence, fewer oscillations, better final connectivity
-- Physics (orange line): slower, may plateau at higher error
-- Best of both: RL is tried first; falls back to physics if no checkpoint is provided
+```
+Algorithm:   PPO (Stable Baselines 3 v2.7.1)
+Policy:      MlpPolicy — 2 hidden layers × 64 units, tanh
+n_steps:     4096     n_epochs: 10     clip_range: 0.2
+
+Curriculum:  8 stages (grid 1.8m → v-shape 1.0m)
+Result:      Stage 1 reward ≈ 60   Stage 6 reward ≈ 55   Stage 8 reward ≈ 12
+Checkpoint:  RL/checkpoints/sb3/best_model.zip
+```
 
 ---
 
-## 9. Metrics & What They Mean
+## 8. Video Pipeline (New)
+
+### Why a separate video pipeline?
+
+The image pipeline uses physics/RL to converge from start positions to targets — this takes 150 simulation frames and is designed for a single still image. For video:
+- Targets move every real frame (person walks, camera pans)
+- 150 physics steps per video frame = impossible in real time
+- Physics repulsion scatters drones when they are densely packed in portrait frames
+
+### v2 Design: Pixel-Space Lerp
+
+Everything stays in **raw pixel coordinates** — no normalization, no physics repulsion:
+
+```
+Frame N:
+  1.  Segment frame  →  person mask (DeepLabV3)
+  2.  Sample targets →  300 pixel (col, row) positions on silhouette
+  3.  EMA targets    →  0.70 × new + 0.30 × prev  (suppress jitter)
+  4.  Hungarian      →  re-assign drones to smoothed targets
+  5.  Lerp drones    →  pos += 0.30 × (targets − pos)
+  6.  MiDaS depth    →  every 6 frames, colour dots cyan→red by depth
+  7.  Render         →  draw dots on frame, write to MP4
+
+Frame N+1:  positions carry over → drones glide continuously
+```
+
+### What to expect in output
+
+- Drones are placed **on the person silhouette** from frame 0
+- They smoothly follow person movement (lerp creates trailing effect — cinematic)
+- Average tracking error ≈ 13–30 px after first few frames (within one dot-radius)
+- Dot colours: near depth = bright cyan, far depth = deep red; gradient (cyan top → orange bottom) when depth disabled
+- HUD bar shows: frame counter, drone count, tracking error, fps
+
+### Key numbers (308-frame 4K video, 300 drones)
+
+| Metric | Value |
+|---|---|
+| Processing resolution | 640 × 1214 px |
+| Tracking error (settled) | ~13–20 px |
+| Frames detecting person | All 308 |
+| Depth update interval | Every 6 frames |
+| Output file | `output/4761762-uhd_2160_4096_25fps_swarm.mp4` |
+
+---
+
+## 9. Metrics
 
 | Metric | Good Value | Meaning |
 |---|---|---|
-| Convergence Error | < 1.0 | Mean distance (units) from each drone to its assigned target. Lower = better formation accuracy. |
-| Connectivity Ratio | > 0.80 | Fraction of drone pairs within communication range. Above 80% means well-networked swarm. |
-| Min Inter-Drone Distance | > 0.50 | Closest any two drones get. Below 0.5 means collision risk. |
-| Avg Inter-Drone Distance | 1.0 to 3.0 | Typical spacing. Too high = spread out swarm. Too low = crowded. |
-| RL Used | true/false | Whether PPO policy was active for this run. |
+| Convergence Error | < 1.0 | Mean drone-to-target distance (sim units). Lower = better formation accuracy. |
+| Connectivity Ratio | > 0.80 | Fraction of drone pairs within comm range. Above 80% = well-networked swarm. |
+| Min Inter-Drone Distance | > 0.50 | Closest two drones get. Below 0.5 = collision risk. |
+| Avg Inter-Drone Distance | 1.0 – 3.0 | Typical spacing. Too high = spread out. Too low = crowded. |
+| Video Tracking Error | < 30 px | Mean pixel distance from drone dot to silhouette target. |
+| RL Used | true / false | Whether PPO policy drove the simulation. |
 
 ---
 
-## 10. How to Present This Project
+## 10. Presentation Guide
 
 ### One-line pitch
 
-> "We built an AI system that takes any photo, extracts the person silhouette, and autonomously flies hundreds of drones into that exact 3D shape — using the same computer vision AI used in self-driving cars and the same learning algorithm used in robotics labs."
+> "We built an AI that takes any photo or video, finds the person silhouette, and flies hundreds of drones into that exact 3D shape automatically — using the same computer vision as self-driving cars and the same RL algorithm used in robotics research."
 
----
+### 3-Minute Structure
 
-### 3-Minute Presentation Structure
+**30s — Problem**
+Drone light shows cost millions; every waypoint is placed manually by expert designers. We automate that from a single image or live video.
 
-**Slide 1 — The Problem (30 sec)**
-- Drone light shows cost millions — each drone waypoint is placed manually by expert designers
-- This does not scale and is not real-time adaptive
-- Stated goal: fully automate this from a single photograph
+**30s — Solution demo**
+Show `output/formation_precision_report.png` — input photo → 200 drones match exact silhouette. Show video output MP4 — 300 drones track moving person in real time.
 
-**Slide 2 — Our Solution (30 sec)**
-- Feed any photo → system produces flying coordinates automatically
-- Demo: input image (Cristiano Ronaldo) → show output formation_precision_report.png
-- Highlight: 200 drones, fully autonomous, no human waypoint design
+**60s — How (three AI layers)**
+1. **DeepLabV3** — "What shape?" (semantic segmentation, same model as self-driving cars)
+2. **MiDaS** — "How deep?" (monocular 3D from one photo, no stereo needed)
+3. **PPO RL / Lerp** — "How do drones navigate?" (image: learned coordination; video: smooth pixel-space tracking)
 
-**Slide 3 — How It Works — The Pipeline (60 sec)**
-- Three AI systems chained together:
-  - DeepLabV3: "What is the shape?" (semantic segmentation)
-  - MiDaS: "How deep is each part?" (monocular depth estimation)
-  - PPO RL policy: "How do drones navigate there?" (learned coordination)
-- Show the architecture diagram from Section 5
-- Emphasize: it is fully automatic — no manual intervention
+**30s — The RL part**
+- Train with 20 drones → deploy with 1000 drones, same model (parameter sharing)
+- Convergence curve (panel 6): RL beats physics — faster, fewer oscillations
 
-**Slide 4 — The Smart Part: Reinforcement Learning (30 sec)**
-- Drones are not just flying to GPS coordinates — they are learning to coordinate
-- Key result: train on 20 drones, deploy on 1000 — same model, zero retraining
-- Show the convergence curve (Panel 6): RL line converges faster than physics
-- Explain the reward: formation accuracy + connectivity + collision avoidance
-
-**Slide 5 — Results and Output (20 sec)**
-- Show the 6-panel precision report image
-- Point to: drone overlay matches Ronaldo's exact silhouette
-- Metrics: connectivity ratio, convergence error
+**20s — Results**
+- Image: drones match Ronaldo silhouette boundary, connectivity > 80%
+- Video: 300 drones track full 4K 308-frame video, avg error 13 px
 - Output CSV is directly importable to Unity, Blender, or real drone firmware
 
-**Slide 6 — Impact and Future Work (10 sec)**
-- Applicable to: drone light shows, search and rescue, AR overlays, swarm robotics
-- Future: video input for animated sequences, multi-person silhouettes, real quadcopter SDK export
+**10s — Future**
+Multi-person tracking, real Crazyflie SDK export, real-time inference on GPU (<10ms per frame).
 
----
+### Expected Interview Questions
 
-### Questions to Expect and Answers
+**Q: How does each drone know which position to go to?**
+A: Hungarian Algorithm solves global minimum-cost matching before simulation. Greedy nearest-neighbor wastes energy and causes crossing paths — Hungarian prevents this in O(n³).
 
-**Q: How does each drone know which target is its assigned position?**
-A: The Hungarian Algorithm solves this globally before simulation starts. It finds the minimum-cost one-to-one matching between all N drones and all N targets — not just greedy nearest-neighbor. This guarantees no drone crosses another unnecessarily.
+**Q: Why lerp for video instead of physics?**
+A: In dense portrait formations (300 drones in a narrow strip) inter-drone spacing < repulsion radius → physics blasts all drones apart like rain. Lerp has no repulsion — drones glide directly to targets in pixel space.
 
-**Q: What if a drone fails mid-flight?**
-A: The RL policy is trained with random initialization and the observation only uses relative neighbor positions — if a drone disappears, the remaining drones naturally adapt. The policy never assumes a fixed number of neighbors (gaps are padded with zeros).
+**Q: If you train RL with 20 drones, how does it work with 300?**
+A: Parameter sharing — one neural network is applied independently to each drone. The policy sees a (21,) local observation, not swarm size. Applied 300 times → same quality, zero retraining.
 
-**Q: Why not just use GPS coordinates directly?**
-A: The system outputs waypoints — GPS integration is the deploy layer, compatible with ROS, Crazyflies, and DJI SDK. The output CSV is industry-standard format. Our contribution is the intelligence that computes these waypoints from an arbitrary image.
+**Q: Why PPO?**
+A: PPO's clip ratio prevents large policy updates — critical during curriculum when the policy must not forget easy shapes while learning harder ones. More stable than SAC/DDPG with curriculum.
 
 **Q: Is this real-time?**
-A: Neural network inference per drone is under 0.1ms on CPU. For 1000 drones: about 100ms per simulation frame — near real-time. On GPU this drops to under 10ms.
-
-**Q: Why PPO specifically?**
-A: PPO has a clip ratio that prevents the policy from making too-large updates — which is critical when training with curriculum (you do not want the policy to forget stage 1 when moving to stage 8). SAC or DDPG would also work but are more sensitive to hyperparameters.
-
-**Q: What is the difference between RL mode and physics mode?**
-A: Physics applies the same attraction and repulsion force every frame by formula. RL learned from 300,000 simulation steps what combination of movements leads to fast, safe, connected convergence — it adapts to the situation rather than applying a fixed equation.
+A: Neural network inference per drone < 0.1ms CPU. 1000 drones ≈ 100ms/frame on CPU, ~8ms on GPU.
 
 ---
 
@@ -657,77 +547,61 @@ A: Physics applies the same attraction and repulsion force every frame by formul
 
 | Component | Library / Model | Version |
 |---|---|---|
-| Deep Learning framework | PyTorch | 2.x |
-| Semantic Segmentation | DeepLabV3-ResNet101 | torchvision pretrained |
-| Depth Estimation | MiDaS DPT-Large | timm / torch.hub |
-| Reinforcement Learning | Stable Baselines 3 | 2.7.1 |
-| RL Environment | Gymnasium | 1.2.3 |
-| Spatial Indexing | SciPy cKDTree | 1.x |
-| Optimal Assignment | SciPy linear_sum_assignment | 1.x |
-| Computer Vision | OpenCV | 4.x |
-| Numerical Computing | NumPy | 2.x |
+| Deep learning | PyTorch | 2.x |
+| Segmentation | DeepLabV3-ResNet101 | torchvision pretrained |
+| Depth estimation | MiDaS DPT-Large | timm / torch.hub |
+| Reinforcement learning | Stable Baselines 3 | 2.7.1 |
+| RL environment | Gymnasium | 1.2.3 |
+| Optimal assignment | SciPy `linear_sum_assignment` | 1.x |
+| Spatial indexing | SciPy `cKDTree` | 1.x |
+| Computer vision | OpenCV | 4.x |
+| Numerical computing | NumPy | 2.x |
 | Visualization | Matplotlib | 3.x |
-| Data Analysis | Pandas | 2.x |
-| Network Analysis | NetworkX | 3.x |
-| VAE / Custom Models | PyTorch (custom) | — |
+| Data | Pandas | 2.x |
+| Graph analysis | NetworkX | 3.x |
 
 ---
 
 ## 12. Troubleshooting
 
-### ModuleNotFoundError for torch / torchvision / timm
+**ModuleNotFoundError: torch / torchvision / timm**
 ```bash
 D:\drone_swram\.venv\Scripts\pip.exe install torch torchvision timm
 ```
 
-### ModuleNotFoundError for stable-baselines3
+**ModuleNotFoundError: stable_baselines3**
 ```bash
 D:\drone_swram\.venv\Scripts\pip.exe install stable-baselines3[extra] gymnasium
 ```
 
-### ModuleNotFoundError for scipy / networkx
+**MiDaS downloads ~500 MB on first run** — normal, cached at `~/.cache/torch/hub/` afterwards.
+
+**Video output drones scatter (rain effect)** — you are running an old version. Confirm `pipeline_video.py` uses `lerp_step()` and `sample_targets_px()`, not `physics_step()`.
+
+**RL checkpoint path error** — omit `.zip`:
 ```bash
-D:\drone_swram\.venv\Scripts\pip.exe install scipy networkx
+# Correct
+--rl-checkpoint RL/checkpoints/sb3/best_model
+# Wrong
+--rl-checkpoint RL/checkpoints/sb3/best_model.zip
 ```
 
-### MiDaS model download on first run
-- MiDaS downloads approximately 500 MB on first run — requires internet connection
-- Cached at `~/.cache/torch/hub/` after first run, subsequent runs are instant
-- Be patient on first execution — this is normal
+**Slow video processing** — use `--depth-every 0` (disables MiDaS), `--max-frames 20` for quick test.
 
-### Slow convergence or simulation is too slow
-- Reduce `--base-drones` (try 100 instead of 200)
-- Reduce simulation frames: find `num_frames=150` in pipeline.py and change to 80
+**Out of GPU memory** — add `map_location='cpu'` when loading PPO model, or reduce `--drones`.
 
-### RL model not improving during training
-- Check `RL/checkpoints/sb3/evaluations.npz` — load with numpy to inspect mean rewards over time
-- Try increasing `--total-timesteps` to 500000
-- Try fewer curriculum stages — start with only grid shapes before adding circle and v
-
-### Out of memory (OOM) during inference
-- Add `map_location='cpu'` when loading model in `rl_controller.py`
-- Reduce `--base-drones` to lower the number of concurrent inferences
-
-### RL checkpoint path error
-- Do NOT include the `.zip` extension in `--rl-checkpoint`
-- Correct:   `--rl-checkpoint RL/checkpoints/sb3/best_model`
-- Incorrect: `--rl-checkpoint RL/checkpoints/sb3/best_model.zip`
+**RL not converging** — increase `--total-timesteps` to 500000, or check `RL/checkpoints/sb3/evaluations.npz` for reward trend.
 
 ---
 
-## Authors and Acknowledgments
+## Authors
 
 **Hardhik Poosa** — B.Tech Computer Science and Engineering
 
-Libraries and models used:
-- DeepLabV3: Facebook Research / PyTorch team
-- MiDaS: Intel ISL
-- Stable Baselines 3: DLR-RM
-- Hungarian Algorithm implementation: SciPy
-- OpenCV, NumPy, Matplotlib, NetworkX
+Libraries and pre-trained models: DeepLabV3 (Facebook Research / PyTorch), MiDaS (Intel ISL), Stable Baselines 3 (DLR-RM), Hungarian Algorithm (SciPy), OpenCV, NumPy, Matplotlib.
 
 ---
 
-**Last Updated**: February 25, 2026
-**Python**: 3.13.x (.venv) | Stable Baselines 3: 2.7.1 | Gymnasium: 1.2.3
-**Status**: Active — RL training complete, full pipeline operational
+**Last Updated**: February 26, 2026  
+**Python**: 3.13.x (`.venv`) | SB3: 2.7.1 | Gymnasium: 1.2.3  
+**Status**: Active — image pipeline ✅ · RL model trained ✅ · video pipeline v2 ✅

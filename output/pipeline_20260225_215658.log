@@ -1,0 +1,35 @@
+[2026-02-25 21:56:58] INFO     - ================================================================================
+[2026-02-25 21:56:58] INFO     - DRONE SWARM AI - END-TO-END PIPELINE
+[2026-02-25 21:56:58] INFO     - ================================================================================
+[2026-02-25 21:56:58] INFO     - Mode: 3D
+[2026-02-25 21:56:58] INFO     - Output: output/
+[2026-02-25 21:56:58] INFO     - Image: input_images/Cristiano_Ronaldo.webp
+[2026-02-25 21:56:58] INFO     - Base Drones: 200
+[2026-02-25 21:56:58] INFO     - [3D PIPELINE] Starting with image='input_images/Cristiano_Ronaldo.webp'
+[2026-02-25 21:57:06] INFO     - Step 1/4: Extracting 2D outline from image...
+[2026-02-25 21:57:08] INFO     - [OK] Extracted 200 2D waypoints
+[2026-02-25 21:57:09] INFO     - [OK] Saved 2D precision visualization to output\formation_2d_precision.png
+[2026-02-25 21:57:09] INFO     - Step 2/4: Lifting to 3D with depth estimation...
+[2026-02-25 21:57:11] INFO     - [OK] Created 3D volumetric formation with 200 drones
+[2026-02-25 21:57:11] INFO     - Step 3/4: Initializing drone positions and assigning targets...
+[2026-02-25 21:57:11] INFO     - [OK] Assigned 200 drones to waypoints
+[2026-02-25 21:57:11] INFO     - Step 4/4: Running RL-driven simulation (PPO policy)...
+[2026-02-25 21:57:11] INFO     -   Checkpoint: RL/checkpoints/sb3/best_model
+[2026-02-25 21:57:11] DEBUG    -   [RL] Frame   0/150 | mean dist=4.7694
+[2026-02-25 21:57:13] DEBUG    -   [RL] Frame  25/150 | mean dist=3.6314
+[2026-02-25 21:57:15] DEBUG    -   [RL] Frame  50/150 | mean dist=4.8427
+[2026-02-25 21:57:17] DEBUG    -   [RL] Frame  75/150 | mean dist=5.2718
+[2026-02-25 21:57:19] DEBUG    -   [RL] Frame 100/150 | mean dist=5.4183
+[2026-02-25 21:57:21] DEBUG    -   [RL] Frame 125/150 | mean dist=5.4813
+[2026-02-25 21:57:22] INFO     - [OK] RL simulation complete after 150 frames
+[2026-02-25 21:57:23] INFO     - Connectivity Ratio:       0.3714
+[2026-02-25 21:57:23] INFO     - Min Inter-Drone Distance: 0.4398
+[2026-02-25 21:57:23] INFO     - Avg Inter-Drone Distance: 6.2123
+[2026-02-25 21:57:23] INFO     - Convergence Error:        5.4895
+[2026-02-25 21:57:23] INFO     - Generating precision visualization...
+[2026-02-25 21:57:24] INFO     - [OK] Saved visualization to output\formation_precision_report.png
+[2026-02-25 21:57:24] INFO     - [OK] Exported 200 drone positions to output/formation_3d_20260225_215658.csv
+[2026-02-25 21:57:24] INFO     - [OK] Exported metrics to output/formation_3d_20260225_215658_metrics.json
+[2026-02-25 21:57:24] INFO     - ================================================================================
+[2026-02-25 21:57:24] INFO     - [SUCCESS] PIPELINE COMPLETED SUCCESSFULLY
+[2026-02-25 21:57:24] INFO     - ================================================================================
