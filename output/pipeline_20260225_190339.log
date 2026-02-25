@@ -1,0 +1,24 @@
+[2026-02-25 19:03:39] INFO     - ================================================================================
+[2026-02-25 19:03:39] INFO     - DRONE SWARM AI - END-TO-END PIPELINE
+[2026-02-25 19:03:39] INFO     - ================================================================================
+[2026-02-25 19:03:39] INFO     - Mode: 3D
+[2026-02-25 19:03:39] INFO     - Output: output/
+[2026-02-25 19:03:39] INFO     - Image: input_images/516AaQ6o17L.webp
+[2026-02-25 19:03:39] INFO     - Base Drones: 500
+[2026-02-25 19:03:39] INFO     - [3D PIPELINE] Starting with image='input_images/516AaQ6o17L.webp'
+[2026-02-25 19:03:48] INFO     - Step 1/4: Extracting 2D outline from image...
+[2026-02-25 19:03:50] ERROR    - Error in 3D pipeline: `ptp` was removed from the ndarray class in NumPy 2.0. Use np.ptp(arr, ...) instead.
+Traceback (most recent call last):
+  File "D:\drone_swram\pipeline.py", line 237, in run_3d_pipeline
+    formation_2d = image_to_semantic_outline(
+        image_path,
+        n_drones=base_drones,
+        scale_factor=scale_factor
+    )
+  File "D:\drone_swram\utils\semantic_image_to_formation.py", line 209, in image_to_semantic_outline
+    max_range = max(pts_x.ptp(), pts_y.ptp()) / 2.0 + 1e-9
+                    ^^^^^^^^^
+AttributeError: `ptp` was removed from the ndarray class in NumPy 2.0. Use np.ptp(arr, ...) instead.
+[2026-02-25 19:03:50] ERROR    - ================================================================================
+[2026-02-25 19:03:50] ERROR    - [FAILED] PIPELINE FAILED
+[2026-02-25 19:03:50] ERROR    - ================================================================================

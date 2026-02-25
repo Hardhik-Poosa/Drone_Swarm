@@ -1,0 +1,29 @@
+[2026-02-25 18:52:51] INFO     - ================================================================================
+[2026-02-25 18:52:51] INFO     - DRONE SWARM AI - END-TO-END PIPELINE
+[2026-02-25 18:52:51] INFO     - ================================================================================
+[2026-02-25 18:52:51] INFO     - Mode: 3D
+[2026-02-25 18:52:51] INFO     - Output: output/
+[2026-02-25 18:52:51] INFO     - Image: input_images/516AaQ6o17L.webp
+[2026-02-25 18:52:51] INFO     - Base Drones: 300
+[2026-02-25 18:52:51] INFO     - [3D PIPELINE] Starting with image='input_images/516AaQ6o17L.webp'
+[2026-02-25 18:52:59] INFO     - Step 1/4: Extracting 2D outline from image...
+[2026-02-25 18:53:01] INFO     - [OK] Extracted 300 2D waypoints
+[2026-02-25 18:53:01] INFO     - Step 2/4: Lifting to 3D with depth estimation...
+[2026-02-25 18:53:03] INFO     - [OK] Created 3D volumetric formation with 1174 drones
+[2026-02-25 18:53:03] INFO     - Step 3/4: Initializing drone positions and assigning targets...
+[2026-02-25 18:53:04] INFO     - [OK] Assigned 1174 drones to waypoints
+[2026-02-25 18:53:04] INFO     - Step 4/4: Running 3D physics simulation...
+[2026-02-25 18:53:04] DEBUG    -   Frame 0/150
+[2026-02-25 18:53:04] DEBUG    -   Frame 25/150
+[2026-02-25 18:53:05] DEBUG    -   Frame 50/150
+[2026-02-25 18:53:05] DEBUG    -   Frame 75/150
+[2026-02-25 18:53:06] DEBUG    -   Frame 100/150
+[2026-02-25 18:53:07] DEBUG    -   Frame 125/150
+[2026-02-25 18:53:07] INFO     - [OK] Simulation converged after 150 frames
+[2026-02-25 18:53:09] INFO     - Connectivity Ratio: 0.0000
+[2026-02-25 18:53:09] INFO     - Min Inter-Drone Distance: 0.0000
+[2026-02-25 18:53:09] INFO     - Convergence Error: 0.0000
+[2026-02-25 18:53:09] INFO     - [OK] Exported 1174 drone positions to output/formation_3d_20260225_185251.csv
+[2026-02-25 18:53:09] ERROR    - ================================================================================
+[2026-02-25 18:53:09] ERROR    - [FAILED] PIPELINE FAILED
+[2026-02-25 18:53:09] ERROR    - ================================================================================

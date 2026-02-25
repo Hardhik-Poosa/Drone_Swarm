@@ -1,53 +1,56 @@
+"""
+formation_3d.py – Lift 2D drone waypoints to true 3D using MiDaS depth.
+
+Design principle
+----------------
+Each 2D silhouette point maps to exactly ONE 3D point.
+  X, Y  ->  preserved from silhouette  (front view = perfect person shape)
+  Z     ->  MiDaS depth value          (natural depth, closer parts pop forward)
+
+No layer-stacking: stacking creates thick rectangular blobs that look
+nothing like the person when viewed at any angle.
+"""
+
 import numpy as np
 from utils.depth_to_3d import get_depth_map
-from scipy.spatial import cKDTree
 
 
-def lift_to_true_3d(points_2d, image_path, height_scale=8, layers=4):
+def lift_to_true_3d(points_2d: np.ndarray,
+                    image_path: str,
+                    height_scale: float = 3.0,
+                    layers: int = 1) -> np.ndarray:
+    """
+    Convert (N, 2) silhouette points to (N, 3) 3D drone positions.
 
-    depth_map = get_depth_map(image_path)
+    X, Y are preserved exactly – the front-view projection looks
+    identical to the 2D silhouette.  Z comes from MiDaS depth so
+    drones closest to the camera sit at higher Z values.
 
+    Parameters
+    ----------
+    points_2d    : (N, 2) float32  world-space XY from image_to_semantic_outline
+    image_path   : str             path to input image (for MiDaS depth)
+    height_scale : float           multiplier on normalised depth  (default 3.0)
+    layers       : int             kept for API compatibility, always 1 now
+    """
+    depth_map = get_depth_map(image_path)   # H x W, values in ~[0, 1]
     h, w = depth_map.shape
 
-    x_min, x_max = points_2d[:, 0].min(), points_2d[:, 0].max()
-    y_min, y_max = points_2d[:, 1].min(), points_2d[:, 1].max()
+    pts = points_2d.astype(np.float64)
+    x_min, x_max = pts[:, 0].min(), pts[:, 0].max()
+    y_min, y_max = pts[:, 1].min(), pts[:, 1].max()
 
-    base_points = []
+    x_range = max(x_max - x_min, 1e-9)
+    y_range = max(y_max - y_min, 1e-9)
 
-    for x, y in points_2d:
+    result = np.empty((len(pts), 3), dtype=np.float32)
 
-        px = int((x - x_min) / (x_max - x_min) * (w - 1))
-        py = int((y - y_min) / (y_max - y_min) * (h - 1))
+    for i, (x, y) in enumerate(pts):
+        # Map world XY -> pixel.  Y is flipped (world Y-up, image Y-down).
+        px = int(np.clip((x - x_min) / x_range * (w - 1), 0, w - 1))
+        py = int(np.clip((1.0 - (y - y_min) / y_range) * (h - 1), 0, h - 1))
 
-        px = np.clip(px, 0, w - 1)
-        py = np.clip(py, 0, h - 1)
+        z = float(depth_map[py, px]) * height_scale
+        result[i] = [x, y, z]
 
-        z = depth_map[py, px] * height_scale
-
-        base_points.append([x, y, z])
-
-    base_points = np.array(base_points)
-
-    # ---------- Uniform 3D Thickness ----------
-    volumetric_points = []
-
-    for x, y, z in base_points:
-        for i in range(layers):
-            volumetric_points.append([
-                x,
-                y,
-                z - 0.6 + i*(1.2/layers)
-            ])
-
-    volumetric_points = np.array(volumetric_points)
-
-    # ---------- Remove Outliers (Statistical Cleaning) ----------
-    tree = cKDTree(volumetric_points)
-    distances, _ = tree.query(volumetric_points, k=6)
-
-    mean_dist = distances[:, 1:].mean(axis=1)
-    threshold = np.mean(mean_dist) + 2*np.std(mean_dist)
-
-    clean_points = volumetric_points[mean_dist < threshold]
-
-    return clean_points
+    return result

@@ -1,0 +1,415 @@
+{
+  "timestamp": "2026-02-25 18:47:18",
+  "scenarios": 3,
+  "shapes": [
+    "grid",
+    "circle"
+  ],
+  "drone_counts": [
+    30,
+    50
+  ],
+  "methods": [
+    "scripted",
+    "enhanced",
+    "ml_enhanced"
+  ],
+  "data": [
+    {
+      "scenario": 1,
+      "shape": "grid",
+      "N": 30,
+      "trial": 1,
+      "method": "scripted",
+      "connectivity": 0,
+      "min_distance": 0,
+      "convergence_error": 0,
+      "compute_time": 0.0004305839538574219
+    },
+    {
+      "scenario": 1,
+      "shape": "grid",
+      "N": 30,
+      "trial": 1,
+      "method": "enhanced",
+      "connectivity": 0,
+      "min_distance": 0,
+      "convergence_error": 0,
+      "compute_time": 0.0006546974182128906
+    },
+    {
+      "scenario": 1,
+      "shape": "grid",
+      "N": 30,
+      "trial": 1,
+      "method": "ml_enhanced",
+      "connectivity": 0,
+      "min_distance": 0,
+      "convergence_error": 0,
+      "compute_time": 0.000637054443359375
+    },
+    {
+      "scenario": 2,
+      "shape": "grid",
+      "N": 30,
+      "trial": 2,
+      "method": "scripted",
+      "connectivity": 0,
+      "min_distance": 0,
+      "convergence_error": 0,
+      "compute_time": 0.0005757808685302734
+    },
+    {
+      "scenario": 2,
+      "shape": "grid",
+      "N": 30,
+      "trial": 2,
+      "method": "enhanced",
+      "connectivity": 0,
+      "min_distance": 0,
+      "convergence_error": 0,
+      "compute_time": 0.0006396770477294922
+    },
+    {
+      "scenario": 2,
+      "shape": "grid",
+      "N": 30,
+      "trial": 2,
+      "method": "ml_enhanced",
+      "connectivity": 0,
+      "min_distance": 0,
+      "convergence_error": 0,
+      "compute_time": 0.0006463527679443359
+    },
+    {
+      "scenario": 3,
+      "shape": "grid",
+      "N": 30,
+      "trial": 3,
+      "method": "scripted",
+      "connectivity": 0,
+      "min_distance": 0,
+      "convergence_error": 0,
+      "compute_time": 0.0005719661712646484
+    },
+    {
+      "scenario": 3,
+      "shape": "grid",
+      "N": 30,
+      "trial": 3,
+      "method": "enhanced",
+      "connectivity": 0,
+      "min_distance": 0,
+      "convergence_error": 0,
+      "compute_time": 0.0006301403045654297
+    },
+    {
+      "scenario": 3,
+      "shape": "grid",
+      "N": 30,
+      "trial": 3,
+      "method": "ml_enhanced",
+      "connectivity": 0,
+      "min_distance": 0,
+      "convergence_error": 0,
+      "compute_time": 0.0006740093231201172
+    },
+    {
+      "scenario": 4,
+      "shape": "grid",
+      "N": 50,
+      "trial": 1,
+      "method": "scripted",
+      "connectivity": 0,
+      "min_distance": 0,
+      "convergence_error": 0,
+      "compute_time": 0.00039649009704589844
+    },
+    {
+      "scenario": 4,
+      "shape": "grid",
+      "N": 50,
+      "trial": 1,
+      "method": "enhanced",
+      "connectivity": 0,
+      "min_distance": 0,
+      "convergence_error": 0,
+      "compute_time": 0.0008356571197509766
+    },
+    {
+      "scenario": 4,
+      "shape": "grid",
+      "N": 50,
+      "trial": 1,
+      "method": "ml_enhanced",
+      "connectivity": 0,
+      "min_distance": 0,
+      "convergence_error": 0,
+      "compute_time": 0.0006506443023681641
+    },
+    {
+      "scenario": 5,
+      "shape": "grid",
+      "N": 50,
+      "trial": 2,
+      "method": "scripted",
+      "connectivity": 0,
+      "min_distance": 0,
+      "convergence_error": 0,
+      "compute_time": 0.0003972053527832031
+    },
+    {
+      "scenario": 5,
+      "shape": "grid",
+      "N": 50,
+      "trial": 2,
+      "method": "enhanced",
+      "connectivity": 0,
+      "min_distance": 0,
+      "convergence_error": 0,
+      "compute_time": 0.0006949901580810547
+    },
+    {
+      "scenario": 5,
+      "shape": "grid",
+      "N": 50,
+      "trial": 2,
+      "method": "ml_enhanced",
+      "connectivity": 0,
+      "min_distance": 0,
+      "convergence_error": 0,
+      "compute_time": 0.0006353855133056641
+    },
+    {
+      "scenario": 6,
+      "shape": "grid",
+      "N": 50,
+      "trial": 3,
+      "method": "scripted",
+      "connectivity": 0,
+      "min_distance": 0,
+      "convergence_error": 0,
+      "compute_time": 0.0005445480346679688
+    },
+    {
+      "scenario": 6,
+      "shape": "grid",
+      "N": 50,
+      "trial": 3,
+      "method": "enhanced",
+      "connectivity": 0,
+      "min_distance": 0,
+      "convergence_error": 0,
+      "compute_time": 0.0007696151733398438
+    },
+    {
+      "scenario": 6,
+      "shape": "grid",
+      "N": 50,
+      "trial": 3,
+      "method": "ml_enhanced",
+      "connectivity": 0,
+      "min_distance": 0,
+      "convergence_error": 0,
+      "compute_time": 0.0006551742553710938
+    },
+    {
+      "scenario": 7,
+      "shape": "circle",
+      "N": 30,
+      "trial": 1,
+      "method": "scripted",
+      "connectivity": 0,
+      "min_distance": 0,
+      "convergence_error": 0,
+      "compute_time": 0.00040531158447265625
+    },
+    {
+      "scenario": 7,
+      "shape": "circle",
+      "N": 30,
+      "trial": 1,
+      "method": "enhanced",
+      "connectivity": 0,
+      "min_distance": 0,
+      "convergence_error": 0,
+      "compute_time": 0.0006437301635742188
+    },
+    {
+      "scenario": 7,
+      "shape": "circle",
+      "N": 30,
+      "trial": 1,
+      "method": "ml_enhanced",
+      "connectivity": 0,
+      "min_distance": 0,
+      "convergence_error": 0,
+      "compute_time": 0.0006680488586425781
+    },
+    {
+      "scenario": 8,
+      "shape": "circle",
+      "N": 30,
+      "trial": 2,
+      "method": "scripted",
+      "connectivity": 0,
+      "min_distance": 0,
+      "convergence_error": 0,
+      "compute_time": 0.0004343986511230469
+    },
+    {
+      "scenario": 8,
+      "shape": "circle",
+      "N": 30,
+      "trial": 2,
+      "method": "enhanced",
+      "connectivity": 0,
+      "min_distance": 0,
+      "convergence_error": 0,
+      "compute_time": 0.0006420612335205078
+    },
+    {
+      "scenario": 8,
+      "shape": "circle",
+      "N": 30,
+      "trial": 2,
+      "method": "ml_enhanced",
+      "connectivity": 0,
+      "min_distance": 0,
+      "convergence_error": 0,
+      "compute_time": 0.0006463527679443359
+    },
+    {
+      "scenario": 9,
+      "shape": "circle",
+      "N": 30,
+      "trial": 3,
+      "method": "scripted",
+      "connectivity": 0,
+      "min_distance": 0,
+      "convergence_error": 0,
+      "compute_time": 0.0004870891571044922
+    },
+    {
+      "scenario": 9,
+      "shape": "circle",
+      "N": 30,
+      "trial": 3,
+      "method": "enhanced",
+      "connectivity": 0,
+      "min_distance": 0,
+      "convergence_error": 0,
+      "compute_time": 0.0009546279907226562
+    },
+    {
+      "scenario": 9,
+      "shape": "circle",
+      "N": 30,
+      "trial": 3,
+      "method": "ml_enhanced",
+      "connectivity": 0,
+      "min_distance": 0,
+      "convergence_error": 0,
+      "compute_time": 0.0008041858673095703
+    },
+    {
+      "scenario": 10,
+      "shape": "circle",
+      "N": 50,
+      "trial": 1,
+      "method": "scripted",
+      "connectivity": 0,
+      "min_distance": 0,
+      "convergence_error": 0,
+      "compute_time": 0.0004000663757324219
+    },
+    {
+      "scenario": 10,
+      "shape": "circle",
+      "N": 50,
+      "trial": 1,
+      "method": "enhanced",
+      "connectivity": 0,
+      "min_distance": 0,
+      "convergence_error": 0,
+      "compute_time": 0.0006382465362548828
+    },
+    {
+      "scenario": 10,
+      "shape": "circle",
+      "N": 50,
+      "trial": 1,
+      "method": "ml_enhanced",
+      "connectivity": 0,
+      "min_distance": 0,
+      "convergence_error": 0,
+      "compute_time": 0.0006542205810546875
+    },
+    {
+      "scenario": 11,
+      "shape": "circle",
+      "N": 50,
+      "trial": 2,
+      "method": "scripted",
+      "connectivity": 0,
+      "min_distance": 0,
+      "convergence_error": 0,
+      "compute_time": 0.0004038810729980469
+    },
+    {
+      "scenario": 11,
+      "shape": "circle",
+      "N": 50,
+      "trial": 2,
+      "method": "enhanced",
+      "connectivity": 0,
+      "min_distance": 0,
+      "convergence_error": 0,
+      "compute_time": 0.0006468296051025391
+    },
+    {
+      "scenario": 11,
+      "shape": "circle",
+      "N": 50,
+      "trial": 2,
+      "method": "ml_enhanced",
+      "connectivity": 0,
+      "min_distance": 0,
+      "convergence_error": 0,
+      "compute_time": 0.0006451606750488281
+    },
+    {
+      "scenario": 12,
+      "shape": "circle",
+      "N": 50,
+      "trial": 3,
+      "method": "scripted",
+      "connectivity": 0,
+      "min_distance": 0,
+      "convergence_error": 0,
+      "compute_time": 0.0004458427429199219
+    },
+    {
+      "scenario": 12,
+      "shape": "circle",
+      "N": 50,
+      "trial": 3,
+      "method": "enhanced",
+      "connectivity": 0,
+      "min_distance": 0,
+      "convergence_error": 0,
+      "compute_time": 0.0007145404815673828
+    },
+    {
+      "scenario": 12,
+      "shape": "circle",
+      "N": 50,
+      "trial": 3,
+      "method": "ml_enhanced",
+      "connectivity": 0,
+      "min_distance": 0,
+      "convergence_error": 0,
+      "compute_time": 0.0006439685821533203
+    }
+  ]
+}

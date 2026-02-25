@@ -18,7 +18,7 @@ from utils.evaluate_swarm import evaluate_formation
 # ---------------- USER INPUT ---------------------
 # -------------------------------------------------
 
-IMAGE_PATH = "D:\\drone_swram\\input_images\\516AaQ6o17L.webp"
+IMAGE_PATH = "D:\\drone_swram\\input_images\\Cristiano_Ronaldo.webp"
 N_DRONES = 300
 SCALE_FACTOR = 5
 

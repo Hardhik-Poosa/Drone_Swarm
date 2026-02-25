@@ -1,0 +1,39 @@
+# Configuration for 3D Drone Swarm Simulation (Image-based)
+# ===========================================================
+
+simulation:
+  mode: "3d"
+  base_drones: 300
+  num_frames: 150
+  step_size: 0.05
+
+image_to_3d:
+  # Image conversion parameters
+  scale_factor: 6
+  height_scale: 10
+  layers: 4
+  
+physics:
+  repulsion_strength: 0.02
+  repulsion_radius: 0.6
+
+environment:
+  communication_range: 5.0
+  min_safe_distance: 0.5
+
+reward_weights:
+  connectivity: 1.0
+  safety: 2.0
+  convergence: 0.1
+  bonus: 0.5
+
+depth_estimation:
+  model: "MiDaS"
+  model_variant: "dpt_large"  # dpt_large, dpt_hybrid, midas_v3
+  device: "cuda"  # cuda or cpu
+
+output:
+  save_csv: true
+  csv_path: "output/drone_positions_3d.csv"
+  show_visualization: true
+  save_visualization_frames: false

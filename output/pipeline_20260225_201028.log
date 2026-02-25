@@ -1,0 +1,18 @@
+[2026-02-25 20:10:28] INFO     - ================================================================================
+[2026-02-25 20:10:28] INFO     - DRONE SWARM AI - END-TO-END PIPELINE
+[2026-02-25 20:10:28] INFO     - ================================================================================
+[2026-02-25 20:10:28] INFO     - Mode: 3D
+[2026-02-25 20:10:28] INFO     - Output: output/
+[2026-02-25 20:10:28] INFO     - Image: input_images/Cristiano_Ronaldo.webp
+[2026-02-25 20:10:28] INFO     - Base Drones: 200
+[2026-02-25 20:10:28] INFO     - [3D PIPELINE] Starting with image='input_images/Cristiano_Ronaldo.webp'
+[2026-02-25 20:10:29] ERROR    - Error in 3D pipeline: No module named 'torchvision'
+Traceback (most recent call last):
+  File "D:\drone_swram\pipeline.py", line 225, in run_3d_pipeline
+    from utils.semantic_image_to_formation import image_to_semantic_outline
+  File "D:\drone_swram\utils\semantic_image_to_formation.py", line 2, in <module>
+    import torchvision.transforms as T
+ModuleNotFoundError: No module named 'torchvision'
+[2026-02-25 20:10:29] ERROR    - ================================================================================
+[2026-02-25 20:10:29] ERROR    - [FAILED] PIPELINE FAILED
+[2026-02-25 20:10:29] ERROR    - ================================================================================

@@ -1,0 +1,59 @@
+# Drone Swarm AI - Requirements
+# ==============================
+
+# Core dependencies
+numpy>=1.21.0
+scipy>=1.7.0
+pandas>=1.3.0
+matplotlib>=3.4.0
+opencv-python>=4.5.0
+Pillow>=8.3.0
+
+# PyTorch (CPU by default, see notes below)
+torch>=1.9.0
+torchvision>=0.10.0
+torchaudio>=0.9.0
+
+# Vision Models
+timm>=0.4.12
+# torchvision includes ResNet, but timm needed for newer architectures
+
+# Depth Estimation (MiDaS)
+# Note: Downloads models on first run (~400MB each)
+
+# RL Dependencies (optional, for RL training)
+# Uncomment next lines if training RL models
+# ray[rllib]>=2.9.0
+# gymnasium>=0.27.0
+# pettingzoo>=1.22.0
+
+# Config & Data
+PyYAML>=5.4.0
+tqdm>=4.62.0
+
+# Optimization & ML
+scikit-learn>=0.24.0
+scikit-image>=0.18.0
+
+# Development (optional)
+# pytest>=6.2.0
+# black>=21.6b0
+# flake8>=3.9.0
+
+# ======== INSTALLATION NOTES ========
+#
+# 1. GPU Support (CUDA 11.8):
+#    pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
+#
+# 2. For RL training:
+#    pip install 'ray[rllib]>=2.9.0' gymnasium
+#
+# 3. Windows-specific:
+#    Some packages may require Visual Studio Build Tools
+#
+# 4. Full environment setup:
+#    conda create -n drone python=3.10
+#    conda activate drone
+#    pip install -r requirements.txt
+#
+# ====================================

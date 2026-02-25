@@ -1,0 +1,23 @@
+[2026-02-25 18:51:43] INFO     - ================================================================================
+[2026-02-25 18:51:43] INFO     - DRONE SWARM AI - END-TO-END PIPELINE
+[2026-02-25 18:51:43] INFO     - ================================================================================
+[2026-02-25 18:51:43] INFO     - Mode: 3D
+[2026-02-25 18:51:43] INFO     - Output: output/
+[2026-02-25 18:51:43] INFO     - Image: input_images/smile.webp
+[2026-02-25 18:51:43] INFO     - Base Drones: 300
+[2026-02-25 18:51:43] INFO     - [3D PIPELINE] Starting with image='input_images/smile.webp'
+[2026-02-25 18:51:52] INFO     - Step 1/4: Extracting 2D outline from image...
+[2026-02-25 18:51:53] ERROR    - Error in 3D pipeline: No person detected in image.
+Traceback (most recent call last):
+  File "D:\drone_swram\pipeline.py", line 229, in run_3d_pipeline
+    formation_2d = image_to_semantic_outline(
+        image_path,
+        n_drones=base_drones,
+        scale_factor=scale_factor
+    )
+  File "D:\drone_swram\utils\semantic_image_to_formation.py", line 61, in image_to_semantic_outline
+    raise ValueError("No person detected in image.")
+ValueError: No person detected in image.
+[2026-02-25 18:51:53] ERROR    - ================================================================================
+[2026-02-25 18:51:53] ERROR    - [FAILED] PIPELINE FAILED
+[2026-02-25 18:51:53] ERROR    - ================================================================================

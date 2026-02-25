@@ -1,0 +1,33 @@
+# Configuration for 2D Drone Swarm Simulation
+# ================================================
+
+simulation:
+  mode: "2d"
+  num_drones: 50
+  num_frames: 120
+  step_size: 0.08
+  
+formation:
+  shape: "grid"  # Options: grid, circle, v, line
+  distance: 1.5
+  seed: 42
+
+physics:
+  # Empty for 2D (basic attraction only)
+  pass: null
+
+environment:
+  communication_range: 5.0
+  min_safe_distance: 0.5
+
+reward_weights:
+  connectivity: 1.0
+  safety: 2.0
+  convergence: 0.1
+  bonus: 0.5
+
+output:
+  save_csv: true
+  csv_path: "output/drone_positions.csv"
+  show_visualization: true
+  save_video: false

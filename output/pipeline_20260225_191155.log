@@ -1,0 +1,34 @@
+[2026-02-25 19:11:55] INFO     - ================================================================================
+[2026-02-25 19:11:55] INFO     - DRONE SWARM AI - END-TO-END PIPELINE
+[2026-02-25 19:11:55] INFO     - ================================================================================
+[2026-02-25 19:11:55] INFO     - Mode: 3D
+[2026-02-25 19:11:55] INFO     - Output: output/
+[2026-02-25 19:11:55] INFO     - Image: input_images/516AaQ6o17L.webp
+[2026-02-25 19:11:55] INFO     - Base Drones: 500
+[2026-02-25 19:11:55] INFO     - [3D PIPELINE] Starting with image='input_images/516AaQ6o17L.webp'
+[2026-02-25 19:12:04] INFO     - Step 1/4: Extracting 2D outline from image...
+[2026-02-25 19:12:06] INFO     - [OK] Extracted 500 2D waypoints
+[2026-02-25 19:12:07] INFO     - [OK] Saved 2D precision visualization to output\formation_2d_precision.png
+[2026-02-25 19:12:07] INFO     - Step 2/4: Lifting to 3D with depth estimation...
+[2026-02-25 19:12:09] INFO     - [OK] Created 3D volumetric formation with 1939 drones
+[2026-02-25 19:12:09] INFO     - Step 3/4: Initializing drone positions and assigning targets...
+[2026-02-25 19:12:11] INFO     - [OK] Assigned 1939 drones to waypoints
+[2026-02-25 19:12:11] INFO     - Step 4/4: Running 3D physics simulation...
+[2026-02-25 19:12:11] DEBUG    -   Frame 0/150
+[2026-02-25 19:12:12] DEBUG    -   Frame 25/150
+[2026-02-25 19:12:14] DEBUG    -   Frame 50/150
+[2026-02-25 19:12:15] DEBUG    -   Frame 75/150
+[2026-02-25 19:12:16] DEBUG    -   Frame 100/150
+[2026-02-25 19:12:17] DEBUG    -   Frame 125/150
+[2026-02-25 19:12:19] INFO     - [OK] Simulation converged after 150 frames
+[2026-02-25 19:12:24] INFO     - Connectivity Ratio:       0.3037
+[2026-02-25 19:12:24] INFO     - Min Inter-Drone Distance: 0.0448
+[2026-02-25 19:12:24] INFO     - Avg Inter-Drone Distance: 7.0152
+[2026-02-25 19:12:24] INFO     - Convergence Error:        0.7817
+[2026-02-25 19:12:24] INFO     - Generating 3D visualization...
+[2026-02-25 19:12:24] INFO     - [OK] Saved visualization to output\formation_3d_visualization.png
+[2026-02-25 19:12:24] INFO     - [OK] Exported 1939 drone positions to output/formation_3d_20260225_191155.csv
+[2026-02-25 19:12:24] INFO     - [OK] Exported metrics to output/formation_3d_20260225_191155_metrics.json
+[2026-02-25 19:12:24] INFO     - ================================================================================
+[2026-02-25 19:12:24] INFO     - [SUCCESS] PIPELINE COMPLETED SUCCESSFULLY
+[2026-02-25 19:12:24] INFO     - ================================================================================

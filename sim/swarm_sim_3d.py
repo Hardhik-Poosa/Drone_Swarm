@@ -14,7 +14,7 @@ from utils.formation_3d import lift_to_true_3d
 import pandas as pd
 
 # ---------------- USER INPUT ----------------
-IMAGE_PATH = "input_images/516AaQ6o17L.webp"
+IMAGE_PATH = "input_images/Cristiano_Ronaldo.webp"
 BASE_DRONES = 300
 SCALE_FACTOR = 6
 HEIGHT_SCALE = 10
