@@ -262,7 +262,8 @@ inference loop)       (O(N log N) k-d tree)
 ```
 drone_swarm/
 |
-+-- pipeline.py                     <- MAIN ENTRY POINT (run this)
++-- pipeline.py                     <- MAIN ENTRY POINT for images
++-- pipeline_video.py               <- VIDEO ENTRY POINT (NEW) — swarm tracks video
 |
 +-- RL/                             <- Reinforcement Learning module
 |   +-- swarm_env_sb3.py           <- Gymnasium env (21-dim obs, per-drone)
@@ -392,6 +393,61 @@ What happens:
 - 8 curriculum stages (grid 1.8m spacing to tighter v-shape 1.0m)
 - Saves `best_model.zip` (highest eval reward) + periodic checkpoints every 30k steps
 - Takes approximately 5 minutes on CPU
+
+---
+
+### Option B2 — Video Drone Swarm (NEW)
+
+Process any video and generate an animated swarm that traces the person silhouette in every frame:
+
+```bash
+# Physics mode (fast, no RL)
+python pipeline_video.py \
+  --video input_images/4761762-uhd_2160_4096_25fps.mp4 \
+  --output output/ \
+  --drones 300 \
+  --depth-every 0
+
+# RL-PPO mode (best quality, uses trained policy per frame)
+python pipeline_video.py \
+  --video input_images/4761762-uhd_2160_4096_25fps.mp4 \
+  --output output/ \
+  --drones 300 \
+  --depth-every 8 \
+  --rl-checkpoint RL/checkpoints/sb3/best_model
+
+# With 3D panel (slower — adds 3D matplotlib view)
+python pipeline_video.py \
+  --video input_images/4761762-uhd_2160_4096_25fps.mp4 \
+  --output output/ \
+  --drones 300 \
+  --render-3d
+```
+
+**What the video pipeline produces:**
+- `output/<video_name>_swarm.mp4` — side-by-side: original video | drone swarm overlay
+- `output/<video_name>_positions.csv` — every drone position per frame (frame, drone_id, x, y, z)
+
+**How temporal consistency works:**
+- Frame 0: Hungarian assigns 300 drones to person silhouette targets
+- Frame 1+: Hungarian reassigns drones to new targets (ensures minimal crossing/shuffling)
+- EMA smoothing (alpha=0.65) on targets prevents jitter from frame-to-frame segmentation noise
+- Physics/RL moves drones incrementally — they "chase" the moving person across scenes
+
+**Key CLI flags for `pipeline_video.py`:**
+
+| Flag | Default | Description |
+|---|---|---|
+| `--video` | required | Input video path |
+| `--drones` | 300 | Number of drones |
+| `--depth-every` | 5 | Run MiDaS every N frames (0=disable, faster) |
+| `--motion-steps` | 6 | Physics/RL iterations per video frame |
+| `--step-size` | 0.15 | Attraction step size (higher=faster response) |
+| `--rl-checkpoint` | None | Path to PPO model (no .zip) |
+| `--render-3d` | False | Add 3D scatter panel to output |
+| `--max-frames` | 0 | Process first N frames only (0=all) |
+| `--skip-frames` | 0 | Skip every N frames for speed |
+| `--dot-radius` | 5 | Drone dot size in pixels |
 
 ---
 
